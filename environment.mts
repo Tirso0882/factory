@@ -8,7 +8,7 @@
 //
 // What a sandbox gets comes from `.factory/factory.config.mts`, resolved in
 // shared/factory.mts. Check it without spending tokens:
-//   pnpm factory:check
+//   factory check
 
 import { execFileSync } from "node:child_process"
 import type { Sandbox } from "@ai-hero/sandcastle"

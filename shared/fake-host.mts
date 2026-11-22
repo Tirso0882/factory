@@ -6,6 +6,8 @@ import type { Host } from "./factory.mts"
 
 type FakeHost = {
   repoRoot?: string
+  /** The installed CLI's version. */
+  factoryVersion?: string
   files?: readonly string[]
   outputs?: Readonly<Record<string, string>>
   env?: Readonly<Record<string, string>>
@@ -17,6 +19,7 @@ type FakeHost = {
 
 export const fakeHost = ({
   repoRoot = "/repo",
+  factoryVersion = "0.1.0",
   files = [],
   outputs = {},
   env = {},
@@ -24,6 +27,7 @@ export const fakeHost = ({
   contents = {},
 }: FakeHost = {}): Host => ({
   repoRoot,
+  factoryVersion,
   home: "/home/dev",
   env,
   exists: (path) => files.includes(path) || path in contents,

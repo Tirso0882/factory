@@ -139,6 +139,44 @@ describe("resolveFactory", () => {
   })
 })
 
+describe("the version range", () => {
+  it("runs a CLI inside the config's range", () => {
+    const cli = fakeHost({ factoryVersion: "0.3.2" })
+    assert.doesNotThrow(() => resolveFactory({ version: "^0.3.0" }, cli))
+  })
+
+  it("stops a CLI outside the range, naming the range and the install", () => {
+    const cli = fakeHost({ factoryVersion: "0.4.0" })
+    assert.throws(
+      () => resolveFactory({ version: "^0.3.0" }, cli),
+      (error: Error) =>
+        error.message.includes("^0.3.0") &&
+        error.message.includes("0.4.0") &&
+        error.message.includes('npm install -g "@tirso0882/factory@^0.3.0"')
+    )
+  })
+
+  it("stops on the version before any other mistake in the config", () => {
+    const cli = fakeHost({ factoryVersion: "0.4.0" })
+    assert.throws(
+      () => resolveFactory({ version: "^0.3.0", limits: { parallel: 0 } }, cli),
+      /\^0\.3\.0/
+    )
+  })
+
+  it("refuses a version that isn't a semver range", () => {
+    assert.throws(
+      () => resolveFactory({ version: "latest please" }, host),
+      /version: "latest please" isn't a semver range/
+    )
+  })
+
+  it("runs any CLI when the config sets no range", () => {
+    const cli = fakeHost({ factoryVersion: "9.0.0" })
+    assert.doesNotThrow(() => resolveFactory({}, cli))
+  })
+})
+
 describe("logFile", () => {
   it("names the log after the branch and the agent", () => {
     assert.deepEqual(
