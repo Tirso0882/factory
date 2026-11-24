@@ -1,6 +1,6 @@
 {
-  // Type-checks the factory: `pnpm typecheck` runs it through turbo, as for
-  // the apps. Nothing is emitted; tsx and `node --test` run the .mts files.
+  // Type-checks the factory: `npm run typecheck`. Nothing is emitted: tsx runs
+  // the CLI's .mts files (bin/factory.mjs) and `node --test` the tests.
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023"],
@@ -16,6 +16,6 @@
     "erasableSyntaxOnly": true,
     "skipLibCheck": true
   },
-  "include": ["**/*.mts", "../.factory/*.mts"],
-  "exclude": ["node_modules", "worktrees", "logs"]
+  "include": ["**/*.mts"],
+  "exclude": ["node_modules", ".sandcastle", ".factory/logs"]
 }

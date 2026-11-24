@@ -5,6 +5,7 @@
 // (factory.test.mts).
 
 import { dirname, join, relative, resolve } from "node:path"
+import semver from "semver"
 import { type SetupStep, shellQuote } from "./setup.mts"
 
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max"
@@ -143,6 +144,9 @@ export type Toolchain = {
 
 /** What a project may set. Every field is optional. */
 export type FactoryConfig = {
+  /** The versions of the factory CLI this config works with, as a semver
+   *  range such as `^0.1.0`. A CLI outside it stops before it does anything. */
+  version?: string
   names?: Partial<Names>
   models?: Partial<Record<Role, Partial<ModelChoice>>>
   limits?: Partial<Limits>
@@ -187,6 +191,8 @@ export type FactoryConfig = {
 export type Host = {
   /** The repo's root directory on the host. */
   repoRoot: string
+  /** The version of the factory CLI that runs. */
+  factoryVersion: string
   /** The user's real home directory. */
   home: string
   /** The host's environment variables. */
@@ -694,11 +700,34 @@ const resolvePrompts = (
   }
 }
 
+const PACKAGE_NAME = "@tirso0882/factory"
+
+/** Stops a CLI the project's `version` range doesn't accept. */
+export const checkVersion = (
+  range: string | undefined,
+  installed: string
+) => {
+  if (range === undefined) return
+  if (semver.validRange(range) === null) {
+    throw new Error(`version: "${range}" isn't a semver range.`)
+  }
+  if (!semver.satisfies(installed, range)) {
+    throw new Error(
+      [
+        `This project needs factory ${range}, but ${installed} is installed.`,
+        `Install a version it accepts: npm install -g "${PACKAGE_NAME}@${range}"`,
+      ].join("\n")
+    )
+  }
+}
+
 /** The settings a run uses: `config`, defaults filled in, for `host`. */
 export const resolveFactory = (
   config: FactoryConfig,
   host: Host
 ): ResolvedFactory => {
+  // First: a config for another version may not mean what this one reads.
+  checkVersion(config.version, host.factoryVersion)
   const names = { ...DEFAULT_NAMES, ...config.names }
   const models = { ...DEFAULT_MODELS }
   for (const role of ROLES) {

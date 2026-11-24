@@ -1,11 +1,9 @@
-// What the host runs itself: git and gh, outside any sandbox.
+// What the host runs itself: git and gh, outside any sandbox. They run in the
+// working directory, which the CLI sets to the project's root before it loads
+// this (cli.mts).
 
 import { execFileSync } from "node:child_process"
-import { join } from "node:path"
-
-// Sandcastle anchors worktrees and `.sandcastle/.env` to the working
-// directory, so run from the repo root wherever the script was started.
-process.chdir(join(import.meta.dirname, "../.."))
+import { githubRepo } from "./remote.mts"
 
 export const host = (command: string, args: string[], input?: string) =>
   execFileSync(command, args, {
@@ -19,12 +17,11 @@ export const git = (...args: string[]) => host("git", args)
 export const gh = (...args: string[]) => host("gh", args)
 export const ghJson = <T,>(...args: string[]) => JSON.parse(gh(...args)) as T
 
-const { nameWithOwner, owner } = ghJson<{
-  nameWithOwner: string
-  owner: { login: string }
-}>("repo", "view", "--json", "nameWithOwner,owner")
+// The repo the host pushes to. Its owner is the one whose issues, reviews and
+// comments the factory acts on.
+const { nameWithOwner, owner } = githubRepo(git("remote", "get-url", "origin"))
 export const REPO = nameWithOwner
-export const OWNER = owner.login
+export const OWNER = owner
 
 export const isAheadOfBase = (baseRef: string, branch: string) => {
   try {
