@@ -1,0 +1,41 @@
+version: 2
+
+# Major versions are upgraded on purpose in their own pull request, so npm
+# updates skip them. These ignores also apply to security updates: a fix that
+# needs a new major shows up as an alert only.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Everything but @ai-hero/sandcastle, which gets a pull request of its
+      # own: CI can't run a real sandbox, so each bump is verified by hand with
+      # `factory check` on goods before it merges.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - "@ai-hero/sandcastle"
+
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns:
+          - "*"
