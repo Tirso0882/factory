@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import * as sandcastle from "@ai-hero/sandcastle"
 import {
+  hostSandbox,
   sandbox,
   setUpSandbox,
   startServices,
@@ -74,6 +75,7 @@ export const checkEnvironment = async (
 ) => {
   const branch = factory.names.environmentCheckBranch
   const plan = checkPlan(factory, { quick })
+  console.log(`Sandbox: ${hostSandbox()}`)
 
   // Set on the host before the sandbox exists and declared nowhere, so it can
   // only reach the sandbox if Sandcastle passes the host's environment through.
