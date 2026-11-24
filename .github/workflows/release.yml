@@ -1,0 +1,74 @@
+# Keeps the release pull request up to date, and on its merge tags the version,
+# creates the GitHub Release and publishes it to npm.
+#
+# npm's trusted publisher for @tirso0882/factory names this file (release.yml):
+# renaming it stops publishing.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+# One release at a time; a newer push waits rather than cancelling a publish.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write # release commits, tags and releases
+      pull-requests: write # the release pull request
+      issues: write # its labels
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      # A pull request opened with GITHUB_TOKEN doesn't trigger workflows, so
+      # the release pull request gets no CI checks. With a GitHub App
+      # (RELEASE_APP_CLIENT_ID and RELEASE_APP_PRIVATE_KEY, as in goods) it
+      # does; without one, close and reopen the pull request to run CI.
+      - id: app-token
+        if: vars.RELEASE_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+  # Trusted publishing: npm trusts this workflow's OIDC identity, so no npm
+  # token is stored, and the package gets provenance for this commit.
+  publish:
+    name: publish
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # the OIDC token npm exchanges for a publish token
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+          persist-credentials: false
+      # Node 24's npm is new enough for trusted publishing (11.5.1 or later).
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm publish --provenance --access public
