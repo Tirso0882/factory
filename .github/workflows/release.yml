@@ -3,6 +3,11 @@
 #
 # npm's trusted publisher for @tirso0882/factory names this file (release.yml):
 # renaming it stops publishing.
+#
+# release-please finds the last release by its tag. 0.1.0 is published by hand
+# (npm attaches a trusted publisher only to a package that exists), so tag that
+# commit `v0.1.0` when publishing it; without the tag, the first release pull
+# request reads all of history as unreleased.
 name: release
 
 on:
@@ -63,12 +68,16 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
           persist-credentials: false
-      # Node 24's npm is new enough for trusted publishing (11.5.1 or later).
+      # No npm cache here, so nothing a pull request wrote can reach a publish.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
       - run: npm ci
+      # Trusted publishing needs npm 11.5.1 or later; fail here, not mid-publish.
+      - run: node -e 'if (!require("semver").gte(process.argv[1], "11.5.1")) { console.error(`npm ${process.argv[1]} is older than 11.5.1`); process.exit(1) }' "$(npm --version)"
       - run: npm run typecheck
       - run: npm test
-      - run: npm publish --provenance --access public
+      - run: npm run lint
+      # publishConfig.access in package.json makes it public.
+      - run: npm publish --provenance
