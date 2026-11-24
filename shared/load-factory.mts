@@ -59,6 +59,8 @@ export const loadFactory = async (
     try {
       checkVersion(range, factoryVersion())
     } catch (versionError) {
+      // The cause is the failed import, which the version error explains.
+      // eslint-disable-next-line preserve-caught-error
       throw new Error((versionError as Error).message, { cause: error })
     }
     throw error
