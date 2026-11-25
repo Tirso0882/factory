@@ -1,6 +1,6 @@
 {
   "name": "@tirso0882/factory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The agent factory: builds ready-for-agent issues into pull requests.",
   "type": "module",
   "repository": {
