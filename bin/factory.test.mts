@@ -193,13 +193,27 @@ describe("factory init", () => {
   })
 
   it("leaves every toolchain commented out with no lockfile", () => {
-    const lines = initConfig()
-    assert.ok(lines.includes('import { defineFactory } from "factory"'))
-    assert.ok(lines.includes('// import { defineFactory, npm, pnpm, uv } from "factory"'))
-    for (const [, preset] of presets) {
-      assert.ok(lines.includes(`  // toolchains: [${preset}()],`), `lacks ${preset}()`)
-    }
-    assert.ok(!lines.some((line) => line.startsWith("  toolchains:")))
+    const config = initConfig().join("\n")
+    assert.ok(
+      config.includes(
+        [
+          'import { defineFactory } from "factory"',
+          '// import { defineFactory, npm, pnpm, uv } from "factory"',
+        ].join("\n")
+      )
+    )
+    assert.ok(
+      config.includes(
+        [
+          "  // Toolchain presets: cache mounts, a locked install and health probes.",
+          "  // toolchains: [npm()],",
+          "  // toolchains: [pnpm()],",
+          "  // toolchains: [uv()],",
+          "",
+        ].join("\n")
+      )
+    )
+    assert.ok(!config.includes("\n  toolchains:"))
   })
 
   it("writes a starter config that type-checks with its presets", () => {
