@@ -4,8 +4,11 @@
 import assert from "node:assert/strict"
 import { execFileSync, spawnSync } from "node:child_process"
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
+  readdirSync,
   realpathSync,
   rmSync,
   writeFileSync,
@@ -16,6 +19,14 @@ import { after, describe, it } from "node:test"
 import { factoryVersion } from "../shared/load-factory.mts"
 
 const BIN = join(import.meta.dirname, "factory.mjs")
+const TSC = join(import.meta.dirname, "../node_modules/typescript/bin/tsc")
+
+/** Type-check a project as an editor would, from the project's folder. */
+const tsc = (tsconfig: string) =>
+  spawnSync(process.execPath, [TSC, "-p", tsconfig], {
+    cwd: join(tsconfig, "../.."),
+    encoding: "utf8",
+  })
 const dirs: string[] = []
 after(() => dirs.forEach((dir) => rmSync(dir, { recursive: true, force: true })))
 
@@ -118,5 +129,90 @@ export default defineFactory({ version: "^99.0.0", toolchains: [fromTheFuture()]
   it("prints its version anywhere", () => {
     const run = factory(tmpdir(), ["--version"])
     assert.equal(run.stdout.trim(), factoryVersion())
+  })
+})
+
+describe("factory init", () => {
+  it("scaffolds .factory/ and ignores what a run writes", () => {
+    const dir = repo()
+    const run = factory(dir, ["init"])
+    assert.equal(run.status, 0, run.stderr)
+    assert.deepEqual(readdirSync(join(dir, ".factory")).sort(), [
+      "factory.config.mts",
+      "node_modules",
+      "standards.md",
+      "tsconfig.json",
+    ])
+    const ignored = readFileSync(join(dir, ".gitignore"), "utf8").split("\n")
+    for (const entry of [
+      ".factory/logs/",
+      ".factory/.env",
+      ".sandcastle/",
+      ".factory/node_modules/",
+    ]) {
+      assert.ok(ignored.includes(entry), `.gitignore lacks ${entry}`)
+    }
+  })
+
+  it("writes a starter config that loads", () => {
+    const dir = repo()
+    factory(dir, ["init"])
+    // The options are checked once the config has loaded and resolved.
+    const run = factory(dir, ["check", "--nope"])
+    assert.match(run.stderr, /factory check takes only --quick, got --nope\./)
+  })
+
+  it("keeps what .gitignore has and adds only what it lacks", () => {
+    const dir = repo()
+    writeFileSync(join(dir, ".gitignore"), "dist/\n.sandcastle/")
+    factory(dir, ["init"])
+    const lines = readFileSync(join(dir, ".gitignore"), "utf8").split("\n")
+    assert.deepEqual(lines.slice(0, 2), ["dist/", ".sandcastle/"])
+    assert.equal(lines.filter((line) => line === ".sandcastle/").length, 1)
+    assert.ok(lines.includes(".factory/logs/"))
+    assert.ok(lines.includes(".factory/.env"))
+  })
+
+  it("changes nothing in a repo that has .factory/", () => {
+    const dir = repo()
+    mkdirSync(join(dir, ".factory"))
+    writeFileSync(join(dir, ".factory/factory.config.mts"), "mine\n")
+    const run = factory(dir, ["init"])
+    assert.equal(run.status, 1)
+    assert.match(run.stderr, /\.factory already exists/)
+    assert.deepEqual(readdirSync(join(dir, ".factory")), ["factory.config.mts"])
+    assert.equal(readFileSync(join(dir, ".factory/factory.config.mts"), "utf8"), "mine\n")
+    assert.equal(existsSync(join(dir, ".gitignore")), false)
+  })
+
+  it("gives an editor the config's types, with no package.json", () => {
+    const dir = repo()
+    factory(dir, ["init"])
+    const tsconfig = join(dir, ".factory/tsconfig.json")
+    const clean = tsc(tsconfig)
+    assert.equal(clean.status, 0, clean.stdout)
+
+    const config = join(dir, ".factory/factory.config.mts")
+    writeFileSync(
+      config,
+      readFileSync(config, "utf8").replace('standards: "standards.md"', "standards: 42")
+    )
+    const broken = tsc(tsconfig)
+    assert.equal(broken.status, 2)
+    assert.match(
+      broken.stdout,
+      /^\.factory\/factory\.config\.mts\(\d+,\d+\): error TS2322: Type 'number' is not assignable to type 'string'\.$/mu
+    )
+  })
+
+  it("commits no machine's paths, and any command relinks the types", () => {
+    const dir = repo()
+    factory(dir, ["init"])
+    assert.ok(!readFileSync(join(dir, ".factory/tsconfig.json"), "utf8").includes("/"))
+    // A fresh clone has the committed files but not the gitignored link.
+    rmSync(join(dir, ".factory/node_modules"), { recursive: true })
+    factory(dir, ["check", "--nope"])
+    const run = tsc(join(dir, ".factory/tsconfig.json"))
+    assert.equal(run.status, 0, run.stdout)
   })
 })

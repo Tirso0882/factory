@@ -15,7 +15,7 @@ import {
   resolveFactory,
 } from "./factory.mts"
 
-const CONFIG_PATH = ".factory/factory.config.mts"
+export const CONFIG_PATH = ".factory/factory.config.mts"
 
 /** The version of the CLI that runs, from its package.json. */
 export const factoryVersion = (): string =>

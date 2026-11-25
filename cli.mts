@@ -3,14 +3,17 @@
 //
 //   factory [--issue <n>]... [--parallel <n>]   build the backlog (main.mts)
 //           [--update-pr <n> | --address-pr <n>]
+//   factory init              scaffold .factory/ in this repo
 //   factory check [--quick]   check the sandbox without an agent
 //   factory preflight         one tiny agent call: does the token work?
 //   factory --version
 
 import { execFileSync } from "node:child_process"
+import { linkEditorTypes } from "./shared/editor-types.mts"
 import { factoryVersion, loadFactory } from "./shared/load-factory.mts"
 
 const USAGE = `Usage, in a repo with .factory/factory.config.mts:
+  factory init                                scaffold .factory/ (no config needed)
   factory [--issue <n>]... [--parallel <n>]   build the ready-for-agent backlog
   factory --update-pr <n>                     only merge the base branch into it
   factory --address-pr <n>                    only address your review of it
@@ -53,9 +56,19 @@ const main = async (argv: readonly string[]) => {
   }
 
   const root = repoRoot()
+  // init comes before the config loads, since it writes the config.
+  if (command === "init") {
+    if (rest.length > 0) {
+      throw new Error(`factory init takes no options, got ${rest.join(" ")}.`)
+    }
+    const { init } = await import("./init.mts")
+    for (const line of init(root, factoryVersion())) console.log(line)
+    return
+  }
   // Sandcastle anchors worktrees to the working directory, and the host's
   // git and gh run in it (shared/host.mts).
   process.chdir(root)
+  linkEditorTypes(root)
   const factory = await loadFactory(root)
 
   // Each command's modules load only now: the host's look up the repo when
