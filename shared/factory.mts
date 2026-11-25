@@ -6,6 +6,7 @@
 
 import { dirname, join, relative, resolve } from "node:path"
 import semver from "semver"
+import { type AgentEnv, resolveAgentEnv } from "./agent-env.mts"
 import { type SetupStep, shellQuote } from "./setup.mts"
 
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max"
@@ -244,6 +245,9 @@ export type ResolvedFactory = {
   checks: readonly Check[]
   probes: readonly Check[]
   sandbox: ResolvedSandbox
+  /** The agent's tokens, from the per-user and project env files
+   *  (agent-env.mts). Every sandbox gets them. */
+  agentEnv: AgentEnv
   /** The compose file to start before a run, if the project has services. */
   services?: { composeFile: string }
   /** The highest slot a sandbox may take, if the project limits it. */
@@ -774,6 +778,7 @@ export const resolveFactory = (
       ...(config.probes ?? []),
     ]),
     sandbox: resolveSandbox(config, host, sources),
+    agentEnv: resolveAgentEnv(host),
     ...(config.services === undefined
       ? {}
       : {

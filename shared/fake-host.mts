@@ -15,7 +15,12 @@ type FakeHost = {
   links?: Readonly<Record<string, string>>
   /** Files to read, by path, and what they hold. They exist too. */
   contents?: Readonly<Record<string, string>>
+  /** The per-user `~/.config/factory/.env`, or `null` for none. By default
+   *  it holds a fake token, so the factory resolves. */
+  userEnv?: string | null
 }
+
+const USER_ENV_FILE = "/home/dev/.config/factory/.env"
 
 export const fakeHost = ({
   repoRoot = "/repo",
@@ -24,24 +29,31 @@ export const fakeHost = ({
   outputs = {},
   env = {},
   links = {},
-  contents = {},
-}: FakeHost = {}): Host => ({
-  repoRoot,
-  factoryVersion,
-  home: "/home/dev",
-  env,
-  exists: (path) => files.includes(path) || path in contents,
-  read: (path) => {
-    const text = contents[path]
-    if (text === undefined) throw new Error(`The fake host has no ${path}.`)
-    return text
-  },
-  realPath: (path) => links[path] ?? path,
-  output: (command) => {
-    const out = outputs[command.join(" ")]
-    if (out === undefined) {
-      throw new Error(`The fake host can't run: ${command.join(" ")}`)
-    }
-    return out
-  },
-})
+  contents: callerContents = {},
+  userEnv = "CLAUDE_CODE_OAUTH_TOKEN=fake-token\n",
+}: FakeHost = {}): Host => {
+  const contents: Readonly<Record<string, string>> =
+    userEnv === null
+      ? callerContents
+      : { [USER_ENV_FILE]: userEnv, ...callerContents }
+  return {
+    repoRoot,
+    factoryVersion,
+    home: "/home/dev",
+    env,
+    exists: (path) => files.includes(path) || path in contents,
+    read: (path) => {
+      const text = contents[path]
+      if (text === undefined) throw new Error(`The fake host has no ${path}.`)
+      return text
+    },
+    realPath: (path) => links[path] ?? path,
+    output: (command) => {
+      const out = outputs[command.join(" ")]
+      if (out === undefined) {
+        throw new Error(`The fake host can't run: ${command.join(" ")}`)
+      }
+      return out
+    },
+  }
+}

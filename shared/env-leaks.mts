@@ -5,7 +5,8 @@
 export type EnvLeak = { name: string; reason: string }
 
 export type EnvContext = {
-  /** Keys `.sandcastle/.env` declares: Sandcastle passes these on purpose. */
+  /** Keys the agent's env files declare (agent-env.mts): the factory passes
+   *  these on purpose. */
   declared: ReadonlySet<string>
   /** The host's secrets, name → value. */
   hostSecrets: ReadonlyMap<string, string>
@@ -26,8 +27,8 @@ export const secretsIn = (env: NodeJS.ProcessEnv) =>
   )
 
 /**
- * The name/value pairs of a `.env` file, read the way Sandcastle reads
- * `.sandcastle/.env`: blank lines and comments skipped, quotes stripped.
+ * The name/value pairs of a `.env` file: blank lines and comments skipped,
+ * quotes stripped.
  */
 export const parseEnvFile = (text: string): [string, string][] =>
   text.split("\n").flatMap((line) => {
