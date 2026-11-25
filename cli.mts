@@ -53,8 +53,8 @@ const main = async (argv: readonly string[]) => {
   }
 
   const root = repoRoot()
-  // Sandcastle anchors worktrees and `.sandcastle/.env` to the working
-  // directory, and the host's git and gh run in it (shared/host.mts).
+  // Sandcastle anchors worktrees to the working directory, and the host's
+  // git and gh run in it (shared/host.mts).
   process.chdir(root)
   const factory = await loadFactory(root)
 

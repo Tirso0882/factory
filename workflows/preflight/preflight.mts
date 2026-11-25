@@ -1,5 +1,5 @@
-// One tiny call through a sandbox proves the token in `.sandcastle/.env`
-// before any ticket depends on it.
+// One tiny call through a sandbox proves the agent's token (from
+// `~/.config/factory/.env` or `.factory/.env`) before any ticket depends on it.
 
 import * as sandcastle from "@ai-hero/sandcastle"
 import { sandbox } from "../../environment.mts"
@@ -31,9 +31,10 @@ export const preflight = async (
       signal,
     })
   } catch (error) {
+    const { user, project } = factory.agentEnv.files
     throw new Error(
       isAuthFailure(error)
-        ? "The agent can't log in: renew CLAUDE_CODE_OAUTH_TOKEN in .sandcastle/.env with `claude setup-token`."
+        ? `The agent can't log in: renew CLAUDE_CODE_OAUTH_TOKEN with \`claude setup-token\`, in ${user} or in ${project}, which wins.`
         : "The preflight agent run failed.",
       { cause: error }
     )

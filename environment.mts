@@ -6,7 +6,8 @@
 // hides the package caches, so the project's toolchains mount them back in,
 // and it means nothing from the repo's `.env` is ever there: the sandbox gets
 // only the variables the project declares and the tokens in
-// `.sandcastle/.env`. Never copy `.env` into a worktree.
+// `~/.config/factory/.env` and `.factory/.env` (shared/agent-env.mts). Never
+// copy `.env` into a worktree.
 //
 // What a sandbox gets comes from `.factory/factory.config.mts`, resolved in
 // shared/factory.mts. Check it without spending tokens:
@@ -76,7 +77,7 @@ const PROVIDERS = { bwrap, seatbelt } satisfies Record<
 export const sandbox = (factory: ResolvedFactory, slot = 0) => {
   const options: SandboxOptions = {
     mounts: factory.sandbox.mounts,
-    env: factory.sandbox.env(slot),
+    env: { ...factory.sandbox.env(slot), ...factory.agentEnv.values },
   }
   return PROVIDERS[hostSandbox()](options)
 }

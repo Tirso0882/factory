@@ -64,9 +64,8 @@ const checkEnvLeaks = async (
 
 /**
  * Check the sandbox of the project at `repoRoot`, whose working directory
- * this must run in: Sandcastle reads `.sandcastle/.env` from it, and without
- * it the sandbox here wouldn't get the variables an agent's does. It returns
- * how many checks failed.
+ * this must run in: Sandcastle anchors its worktrees there, as it does an
+ * agent's. It returns how many checks failed.
  */
 export const checkEnvironment = async (
   factory: ResolvedFactory,
@@ -82,13 +81,11 @@ export const checkEnvironment = async (
   const canary = `canary-${randomBytes(12).toString("hex")}`
   process.env[CANARY_NAME] = canary
 
-  // What the sandbox may get (`.sandcastle/.env`'s keys) and what it must
-  // not: the host's secret-looking variables and those in the repo's `.env`,
-  // which is read here on the host and never copied in.
+  // What the sandbox may get (the keys of the agent's env files) and what
+  // it must not: the host's secret-looking variables and those in the repo's
+  // `.env`, which is read here on the host and never copied in.
   const envContext: EnvContext = {
-    declared: new Set(
-      envFile(join(repoRoot, ".sandcastle/.env")).map(([k]) => k)
-    ),
+    declared: new Set(factory.agentEnv.declared),
     hostSecrets: new Map([
       ...secretsIn(process.env),
       ...secretsIn(Object.fromEntries(envFile(join(repoRoot, ".env")))),
