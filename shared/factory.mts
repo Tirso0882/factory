@@ -267,7 +267,7 @@ const atOwnPath = (hostPath: string, readonly?: true): ResolvedMount =>
     ? { hostPath, sandboxPath: hostPath, readonly }
     : { hostPath, sandboxPath: hostPath }
 
-// Both installs copy from the mounted caches (a hard link can't cross a
+// Every install copies from the mounted caches (a hard link can't cross a
 // mount), so nothing an agent edits in its worktree reaches them. The
 // lockfiles are the contract: an install that would change one fails.
 const INSTALL_TIMEOUT_SECONDS = 600
