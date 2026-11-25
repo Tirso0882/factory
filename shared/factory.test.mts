@@ -7,6 +7,7 @@ import {
   defineFactory,
   limitText,
   logFile,
+  npm,
   pnpm,
   resolveFactory,
   uv,
@@ -351,6 +352,51 @@ describe("the pnpm() toolchain", () => {
       { hostPath: "/store", sandboxPath: "/store" },
     ])
     assert.deepEqual(sandbox.env(0), { npm_config_store_dir: "/store" })
+  })
+})
+
+describe("the npm() toolchain", () => {
+  const { sandbox, probes } = resolveFactory(
+    { toolchains: [npm()] },
+    fakeHost({ outputs: { "npm config get cache": "/home/dev/.npm" } })
+  )
+
+  it("mounts npm's cache writable", () => {
+    assert.deepEqual(sandbox.mounts, [
+      { hostPath: "/home/dev/.npm", sandboxPath: "/home/dev/.npm" },
+    ])
+  })
+
+  it("points npm at the mounted cache", () => {
+    assert.deepEqual(sandbox.env(1), { npm_config_cache: "/home/dev/.npm" })
+  })
+
+  it("installs from the lockfile without running install scripts", () => {
+    assert.deepEqual(sandbox.setup, [
+      {
+        command: "npm ci --ignore-scripts --prefer-offline",
+        timeoutSeconds: 600,
+      },
+    ])
+  })
+
+  it("probes that npm uses the mounted cache", () => {
+    assert.deepEqual(
+      probes.map((p) => p.command),
+      ['test "$(npm config get cache)" = "$npm_config_cache"']
+    )
+  })
+
+  it("tells the branch updater how to regenerate package-lock.json", () => {
+    const { prompts } = resolveFactory(
+      { toolchains: [npm()] },
+      fakeHost({ outputs: { "npm config get cache": "/home/dev/.npm" } })
+    )
+    assert.equal(prompts.review.LOCKFILE_EXCLUDES, "':!package-lock.json'")
+    assert.match(
+      prompts.updateBranch.LOCKFILES,
+      /`package-lock\.json`.*`package\.json`.*`npm install --package-lock-only --ignore-scripts --prefer-offline`/
+    )
   })
 })
 

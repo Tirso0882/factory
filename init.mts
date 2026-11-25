@@ -29,7 +29,7 @@ const starterConfig = (version: string) => `// The factory's settings for this r
 //   factory check --quick   check the sandbox after changing this file
 
 import { defineFactory } from "factory"
-// import { defineFactory, pnpm, uv } from "factory"
+// import { defineFactory, npm, pnpm, uv } from "factory"
 
 export default defineFactory({
   // The factory CLI versions this config works with. A CLI outside the range
@@ -37,6 +37,7 @@ export default defineFactory({
   version: "^${version}",
 
   // Toolchain presets: cache mounts, a locked install and health probes.
+  // toolchains: [npm()],
   // toolchains: [pnpm()],
   // toolchains: [uv()],
 
