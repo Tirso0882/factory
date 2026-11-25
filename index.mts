@@ -4,7 +4,7 @@
 
 /// <reference types="node" />
 
-export { defineFactory, pnpm, uv } from "./shared/factory.mts"
+export { defineFactory, npm, pnpm, uv } from "./shared/factory.mts"
 export type {
   Check,
   Effort,

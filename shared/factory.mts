@@ -137,7 +137,7 @@ export type Lockfile = {
   install: string
 }
 
-/** A preset for one toolchain, such as `pnpm()` or `uv()`. */
+/** A preset for one toolchain, such as `npm()`, `pnpm()` or `uv()`. */
 export type Toolchain = {
   name: string
   contribute: (host: Host) => Contribution
@@ -267,7 +267,7 @@ const atOwnPath = (hostPath: string, readonly?: true): ResolvedMount =>
     ? { hostPath, sandboxPath: hostPath, readonly }
     : { hostPath, sandboxPath: hostPath }
 
-// Both installs copy from the mounted caches (a hard link can't cross a
+// Every install copies from the mounted caches (a hard link can't cross a
 // mount), so nothing an agent edits in its worktree reaches them. The
 // lockfiles are the contract: an install that would change one fails.
 const INSTALL_TIMEOUT_SECONDS = 600
@@ -277,6 +277,15 @@ const PNPM_LOCKFILE: Lockfile = {
   manifest: "package.json",
   regenerate: "pnpm install --prefer-offline",
   install: "pnpm install --frozen-lockfile --prefer-offline",
+}
+
+// --ignore-scripts: npm runs dependencies' install scripts by default, and a
+// script that runs in every sandbox is code nobody reviewed.
+const NPM_LOCKFILE: Lockfile = {
+  path: "package-lock.json",
+  manifest: "package.json",
+  regenerate: "npm install --package-lock-only --ignore-scripts --prefer-offline",
+  install: "npm ci --ignore-scripts --prefer-offline",
 }
 
 const UV_LOCKFILE: Lockfile = {
@@ -326,6 +335,36 @@ export const pnpm = (): Toolchain => ({
           name: "pnpm uses the mounted store",
           command:
             'test "$(dirname "$(pnpm store path)")" = "$npm_config_store_dir"',
+        },
+      ],
+    }
+  },
+})
+
+/**
+ * npm. Its cache is mounted writable, for the same reason as pnpm's store;
+ * npm's cache is safe to share between parallel installs. Dependencies'
+ * install scripts don't run, so a project whose dependencies need one adds
+ * a probe that shows they work without it.
+ */
+export const npm = (): Toolchain => ({
+  name: "npm",
+  contribute: (host) => {
+    const cache = host.output(["npm", "config", "get", "cache"])
+    return {
+      mounts: [atOwnPath(cache)],
+      env: { npm_config_cache: cache },
+      setup: [
+        {
+          command: NPM_LOCKFILE.install,
+          timeoutSeconds: INSTALL_TIMEOUT_SECONDS,
+        },
+      ],
+      lockfiles: [NPM_LOCKFILE],
+      probes: [
+        {
+          name: "npm uses the mounted cache",
+          command: 'test "$(npm config get cache)" = "$npm_config_cache"',
         },
       ],
     }

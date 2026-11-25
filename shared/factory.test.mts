@@ -7,6 +7,7 @@ import {
   defineFactory,
   limitText,
   logFile,
+  npm,
   pnpm,
   resolveFactory,
   uv,
@@ -351,6 +352,39 @@ describe("the pnpm() toolchain", () => {
       { hostPath: "/store", sandboxPath: "/store" },
     ])
     assert.deepEqual(sandbox.env(0), { npm_config_store_dir: "/store" })
+  })
+})
+
+describe("the npm() toolchain", () => {
+  const { sandbox, probes } = resolveFactory(
+    { toolchains: [npm()] },
+    fakeHost({ outputs: { "npm config get cache": "/home/dev/.npm" } })
+  )
+
+  it("mounts npm's cache writable", () => {
+    assert.deepEqual(sandbox.mounts, [
+      { hostPath: "/home/dev/.npm", sandboxPath: "/home/dev/.npm" },
+    ])
+  })
+
+  it("points npm at the mounted cache", () => {
+    assert.deepEqual(sandbox.env(1), { npm_config_cache: "/home/dev/.npm" })
+  })
+
+  it("installs from the lockfile without running install scripts", () => {
+    assert.deepEqual(sandbox.setup, [
+      {
+        command: "npm ci --ignore-scripts --prefer-offline",
+        timeoutSeconds: 600,
+      },
+    ])
+  })
+
+  it("probes that npm uses the mounted cache", () => {
+    assert.deepEqual(
+      probes.map((p) => p.command),
+      ['test "$(npm config get cache)" = "$npm_config_cache"']
+    )
   })
 })
 
@@ -762,9 +796,10 @@ describe("the prompts' project text", () => {
   })
   describe("lockfiles", () => {
     const { prompts } = resolveFactory(
-      { toolchains: [pnpm(), uv()] },
+      { toolchains: [npm(), pnpm(), uv()] },
       fakeHost({
         outputs: {
+          "npm config get cache": "/home/dev/.npm",
           "pnpm store path": "/home/dev/.local/share/pnpm/store/v10",
           "uv cache dir": "/home/dev/.cache/uv",
           "uv python dir": "/home/dev/.local/share/uv/python",
@@ -775,20 +810,24 @@ describe("the prompts' project text", () => {
     it("leaves the toolchains' lockfiles out of the reviewer's diff", () => {
       assert.equal(
         prompts.review.LOCKFILE_EXCLUDES,
-        "':!pnpm-lock.yaml' ':!uv.lock'"
+        "':!package-lock.json' ':!pnpm-lock.yaml' ':!uv.lock'"
       )
     })
 
     it("tells the reviewer how to read the lockfiles it left out", () => {
       assert.match(
         prompts.review.LOCKFILES,
-        /git diff origin\/main\.\.\.HEAD -- pnpm-lock\.yaml uv\.lock/
+        /git diff origin\/main\.\.\.HEAD -- package-lock\.json pnpm-lock\.yaml uv\.lock/
       )
     })
 
     it("tells the branch updater how each toolchain regenerates its lockfile", () => {
       const text = prompts.updateBranch.LOCKFILES
       assert.match(text, /git checkout --theirs <lockfile>/)
+      assert.match(
+        text,
+        /`package-lock\.json`.*`package\.json`.*`npm install --package-lock-only --ignore-scripts --prefer-offline`/
+      )
       assert.match(
         text,
         /`pnpm-lock\.yaml`.*`package\.json`.*`pnpm install --prefer-offline`/
@@ -798,6 +837,7 @@ describe("the prompts' project text", () => {
 
     it("tells the branch updater to install from a changed lockfile", () => {
       const text = prompts.updateBranch.LOCKFILES
+      assert.match(text, /`npm ci --ignore-scripts --prefer-offline`/)
       assert.match(text, /`pnpm install --frozen-lockfile --prefer-offline`/)
       assert.match(text, /`uv sync --locked`/)
     })
