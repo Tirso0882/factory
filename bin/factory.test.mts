@@ -162,6 +162,56 @@ describe("factory init", () => {
     assert.match(run.stderr, /factory check takes only --quick, got --nope\./)
   })
 
+  /** The lines of the config init writes in a repo whose root holds
+   *  `lockfiles`. */
+  const initConfig = (...lockfiles: string[]) => {
+    const dir = repo()
+    for (const lockfile of lockfiles) writeFileSync(join(dir, lockfile), "")
+    const run = factory(dir, ["init"])
+    assert.equal(run.status, 0, run.stderr)
+    return readFileSync(join(dir, ".factory/factory.config.mts"), "utf8").split("\n")
+  }
+
+  const presets: [lockfile: string, preset: string][] = [
+    ["package-lock.json", "npm"],
+    ["pnpm-lock.yaml", "pnpm"],
+    ["uv.lock", "uv"],
+  ]
+  for (const [lockfile, preset] of presets) {
+    it(`turns on ${preset}() for a repo with ${lockfile}`, () => {
+      const lines = initConfig(lockfile)
+      assert.ok(lines.includes(`import { defineFactory, ${preset} } from "factory"`))
+      assert.ok(lines.includes(`  toolchains: [${preset}()],`))
+      assert.ok(!lines.some((line) => line.includes("// import")))
+    })
+  }
+
+  it("turns on a preset for each lockfile", () => {
+    const lines = initConfig("uv.lock", "pnpm-lock.yaml")
+    assert.ok(lines.includes('import { defineFactory, pnpm, uv } from "factory"'))
+    assert.ok(lines.includes("  toolchains: [pnpm(), uv()],"))
+  })
+
+  it("leaves every toolchain commented out with no lockfile", () => {
+    const lines = initConfig()
+    assert.ok(lines.includes('import { defineFactory } from "factory"'))
+    assert.ok(lines.includes('// import { defineFactory, npm, pnpm, uv } from "factory"'))
+    for (const [, preset] of presets) {
+      assert.ok(lines.includes(`  // toolchains: [${preset}()],`), `lacks ${preset}()`)
+    }
+    assert.ok(!lines.some((line) => line.startsWith("  toolchains:")))
+  })
+
+  it("writes a starter config that type-checks with its presets", () => {
+    const dir = repo()
+    for (const lockfile of ["package-lock.json", "pnpm-lock.yaml", "uv.lock"]) {
+      writeFileSync(join(dir, lockfile), "")
+    }
+    factory(dir, ["init"])
+    const run = tsc(join(dir, ".factory/tsconfig.json"))
+    assert.equal(run.status, 0, run.stdout)
+  })
+
   it("keeps what .gitignore has and adds only what it lacks", () => {
     const dir = repo()
     writeFileSync(join(dir, ".gitignore"), "dist/\n.sandcastle/")

@@ -1,5 +1,6 @@
 // `factory init`: sets up a repo for the factory. It writes `.factory/` with a
-// commented starter config, a coding standards file and the tsconfig that
+// commented starter config (which turns on the toolchain presets whose
+// lockfiles are in the repo's root), a coding standards file and the tsconfig that
 // gives an editor the config's types (shared/editor-types.mts), and it
 // gitignores what a run writes. It never touches an existing `.factory/`.
 
@@ -21,15 +22,46 @@ import { CONFIG_PATH } from "./shared/load-factory.mts"
 /** What a run writes and git must never see. */
 const IGNORED = [".factory/logs/", ".factory/.env", ".sandcastle/", EDITOR_LINK]
 
-/** The config `factory init` writes, for the CLI at `version`. */
-const starterConfig = (version: string) => `// The factory's settings for this repo. \`factory\` builds the repo's
+/** The toolchain presets, each by the lockfile that calls for it. */
+const PRESETS = [
+  { lockfile: "package-lock.json", preset: "npm" },
+  { lockfile: "pnpm-lock.yaml", preset: "pnpm" },
+  { lockfile: "uv.lock", preset: "uv" },
+] as const
+
+/** The presets whose lockfiles are in the repo's root. */
+const presetsIn = (repoRoot: string) =>
+  PRESETS.filter(({ lockfile }) => existsSync(join(repoRoot, lockfile))).map(
+    ({ preset }) => preset
+  )
+
+/** The config's import line and toolchains, for the presets `on`: with
+ *  none, every preset is there, commented out. */
+const toolchainLines = (on: readonly string[]) =>
+  on.length === 0
+    ? {
+        imports: `import { defineFactory } from "factory"
+// import { defineFactory, ${PRESETS.map(({ preset }) => preset).join(", ")} } from "factory"`,
+        toolchains: PRESETS.map(
+          ({ preset }) => `  // toolchains: [${preset}()],`
+        ).join("\n"),
+      }
+    : {
+        imports: `import { defineFactory, ${on.join(", ")} } from "factory"`,
+        toolchains: `  toolchains: [${on.map((preset) => `${preset}()`).join(", ")}],`,
+      }
+
+/** The config `factory init` writes, for the CLI at `version`, with the
+ *  presets `on` turned on. */
+const starterConfig = (version: string, on: readonly string[]) => {
+  const { imports, toolchains } = toolchainLines(on)
+  return `// The factory's settings for this repo. \`factory\` builds the repo's
 // ready-for-agent issues into pull requests; this file says what differs from
 // the defaults. Every field is optional, and your editor shows the rest.
 //
 //   factory check --quick   check the sandbox after changing this file
 
-import { defineFactory } from "factory"
-// import { defineFactory, npm, pnpm, uv } from "factory"
+${imports}
 
 export default defineFactory({
   // The factory CLI versions this config works with. A CLI outside the range
@@ -37,9 +69,7 @@ export default defineFactory({
   version: "^${version}",
 
   // Toolchain presets: cache mounts, a locked install and health probes.
-  // toolchains: [npm()],
-  // toolchains: [pnpm()],
-  // toolchains: [uv()],
+${toolchains}
 
   // Quality gates. The agents run them before they commit, and so does
   // \`factory check\`; \`slow\` ones are skipped by \`factory check --quick\`.
@@ -65,6 +95,7 @@ export default defineFactory({
   // limits: { parallel: 2 },
 })
 `
+}
 
 /** A standards file to fill in. */
 const STANDARDS = `# Coding standards
@@ -96,7 +127,7 @@ export const init = (repoRoot: string, factoryVersion: string): string[] => {
     throw new Error(`${dir} already exists, so factory init changed nothing.`)
   }
   mkdirSync(dir)
-  writeFileSync(join(repoRoot, CONFIG_PATH), starterConfig(factoryVersion))
+  writeFileSync(join(repoRoot, CONFIG_PATH), starterConfig(factoryVersion, presetsIn(repoRoot)))
   writeFileSync(join(dir, "standards.md"), STANDARDS)
   writeFileSync(join(dir, "tsconfig.json"), STARTER_TSCONFIG)
   linkEditorTypes(repoRoot)
