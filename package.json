@@ -34,6 +34,8 @@
   },
   "dependencies": {
     "@ai-hero/sandcastle": "^0.14.0",
+    "@types/node": "^24.0.0",
+    "@types/semver": "^7.8.0",
     "semver": "^7.8.6",
     "tsx": "^4.23.15",
     "zod": "4.6.7"
@@ -41,8 +43,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@standard-schema/spec": "^1.1.0",
-    "@types/node": "^24.0.0",
-    "@types/semver": "^7.8.0",
     "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "typescript": "^5.9.3",
