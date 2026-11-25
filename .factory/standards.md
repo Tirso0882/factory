@@ -8,8 +8,9 @@ the code around the change.
 - TypeScript in `.mts` files, with erasable syntax only: Node runs the tests
   by stripping the types, so no enums, namespaces or parameter properties.
 - Imports carry their extension (`./factory.mts`).
-- No semicolons, double quotes, trailing commas where the formatter puts
-  them: match the file.
+- No semicolons, double quotes, and trailing commas in multi-line literals
+  but not after the last argument of a call. No formatter enforces it:
+  match the file.
 - Keep decisions pure. `resolveFactory` and the modules like it take the
   host's facts as data (`Host`) and do no I/O; files, commands and the
   environment stay at the edges (`shared/host.mts`, `cli.mts`).
@@ -21,7 +22,8 @@ the code around the change.
 
 ## Comments
 
-- A file starts with a comment that says what it is for.
+- A source file starts with a comment that says what it is for. Test
+  files start with their imports.
 - Comments say why, in plain words. They don't narrate the code.
 
 ## Tests
@@ -36,8 +38,9 @@ the code around the change.
 
 ## Commits and pull requests
 
-- Conventional Commits (`feat:`, `fix:`, `ci:`, `chore:`, `docs:`): release
-  please builds the changelog and the version from them. A breaking change
+- Conventional Commits (`feat:`, `fix:`, `test:`, `refactor:`, `docs:`,
+  `ci:`, `build:`, `chore:`): release-please builds the changelog and the
+  version from them. A breaking change
   to the config bumps the minor version before 1.0.
 - Never commit `.env` files, tokens, `.factory/logs/` or `.sandcastle/`.
 - Don't edit `CHANGELOG.md` or `.release-please-manifest.json` by hand.

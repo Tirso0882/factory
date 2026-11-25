@@ -7,10 +7,10 @@ import { defineFactory, npm } from "factory"
 
 export default defineFactory({
   // The factory CLI versions this config works with. A CLI outside the range
-  // stops and names the version to install.
-  version: "^0.1.1",
+  // stops and names the version to install. 0.1.2 is the first with npm().
+  version: "^0.1.2",
 
-  // The repo is npm, as its release is: npm's trusted publishing.
+  // npm, because the release publishes with npm's trusted publishing.
   toolchains: [npm()],
 
   // The same gates as CI (.github/workflows/ci.yml).
