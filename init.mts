@@ -1,7 +1,7 @@
 // `factory init`: sets up a repo for the factory. It writes `.factory/` with a
 // commented starter config (which turns on the toolchain presets whose
-// lockfiles are in the repo's root), a coding standards file and the tsconfig that
-// gives an editor the config's types (shared/editor-types.mts), and it
+// lockfiles are in the repo's root), a coding standards file and the tsconfig
+// that gives an editor the config's types (shared/editor-types.mts), and it
 // gitignores what a run writes. It never touches an existing `.factory/`.
 
 import {
@@ -127,7 +127,10 @@ export const init = (repoRoot: string, factoryVersion: string): string[] => {
     throw new Error(`${dir} already exists, so factory init changed nothing.`)
   }
   mkdirSync(dir)
-  writeFileSync(join(repoRoot, CONFIG_PATH), starterConfig(factoryVersion, presetsIn(repoRoot)))
+  writeFileSync(
+    join(repoRoot, CONFIG_PATH),
+    starterConfig(factoryVersion, presetsIn(repoRoot))
+  )
   writeFileSync(join(dir, "standards.md"), STANDARDS)
   writeFileSync(join(dir, "tsconfig.json"), STARTER_TSCONFIG)
   linkEditorTypes(repoRoot)
