@@ -17,6 +17,11 @@ import {
   STARTER_TSCONFIG,
   linkEditorTypes,
 } from "./shared/editor-types.mts"
+import {
+  NPM_LOCKFILE,
+  PNPM_LOCKFILE,
+  UV_LOCKFILE,
+} from "./shared/factory.mts"
 import { CONFIG_PATH } from "./shared/load-factory.mts"
 
 /** What a run writes and git must never see. */
@@ -24,9 +29,9 @@ const IGNORED = [".factory/logs/", ".factory/.env", ".sandcastle/", EDITOR_LINK]
 
 /** The toolchain presets, each by the lockfile that calls for it. */
 const PRESETS = [
-  { lockfile: "package-lock.json", preset: "npm" },
-  { lockfile: "pnpm-lock.yaml", preset: "pnpm" },
-  { lockfile: "uv.lock", preset: "uv" },
+  { lockfile: NPM_LOCKFILE.path, preset: "npm" },
+  { lockfile: PNPM_LOCKFILE.path, preset: "pnpm" },
+  { lockfile: UV_LOCKFILE.path, preset: "uv" },
 ] as const
 
 /** The presets whose lockfiles are in the repo's root. */
