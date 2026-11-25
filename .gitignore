@@ -3,3 +3,6 @@ node_modules/
 .factory/.env
 .factory/logs/
 .sandcastle/
+
+# factory
+.factory/node_modules/
