@@ -29,7 +29,7 @@
   },
   "scripts": {
     "typecheck": "tsc",
-    "test": "node --test 'shared/**/*.test.mts' 'workflows/**/*.test.mts' 'bin/**/*.test.mts'",
+    "test": "node --test '*.test.mts' 'shared/**/*.test.mts' 'workflows/**/*.test.mts' 'bin/**/*.test.mts'",
     "lint": "eslint ."
   },
   "dependencies": {
