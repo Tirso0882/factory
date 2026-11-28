@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Tirso0882/factory/main/.github/assets/readme-factory-ondark@2x.png">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Tirso0882/factory/main/.github/assets/readme-factory-onlight@2x.png">
-    <img alt="factory" src="https://raw.githubusercontent.com/Tirso0882/factory/main/.github/assets/readme-factory-onlight@2x.png" height="200" style="margin-bottom: 20px;">
+    <img alt="factory" src="https://raw.githubusercontent.com/Tirso0882/factory/main/.github/assets/readme-factory-onlight@2x.png" height="240" style="margin-bottom: 20px;">
   </picture>
 </div>
 
