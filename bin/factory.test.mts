@@ -162,6 +162,115 @@ describe("factory init", () => {
     assert.match(run.stderr, /factory check takes only --quick, got --nope\./)
   })
 
+  /** The lines of the config init writes in a repo whose root holds
+   *  `lockfiles`. */
+  const initConfig = (...lockfiles: string[]) => {
+    const dir = repo()
+    for (const lockfile of lockfiles) writeFileSync(join(dir, lockfile), "")
+    const run = factory(dir, ["init"])
+    assert.equal(run.status, 0, run.stderr)
+    return readFileSync(join(dir, ".factory/factory.config.mts"), "utf8").split("\n")
+  }
+
+  /** The commented checks block, from its `{ name, command }` lines. */
+  const checksBlock = (...checks: string[]) =>
+    [
+      "  // checks: [",
+      ...checks.map((check) => `  //   ${check}`),
+      "  // ],",
+    ].join("\n")
+
+  const presets: [lockfile: string, preset: string, lint: string, test: string][] = [
+    ["package-lock.json", "npm", "npm run lint", "npm test"],
+    ["pnpm-lock.yaml", "pnpm", "pnpm lint", "pnpm test"],
+    ["uv.lock", "uv", "uv run ruff check", "uv run pytest"],
+  ]
+  for (const [lockfile, preset, lint, test] of presets) {
+    it(`turns on ${preset}() for a repo with ${lockfile}`, () => {
+      const lines = initConfig(lockfile)
+      assert.ok(lines.includes(`import { defineFactory, ${preset} } from "factory"`))
+      assert.ok(lines.includes(`  toolchains: [${preset}()],`))
+      assert.ok(!lines.some((line) => line.includes("// import")))
+    })
+
+    it(`suggests ${preset}'s checks for a repo with ${lockfile}`, () => {
+      const config = initConfig(lockfile).join("\n")
+      assert.ok(
+        config.includes(
+          checksBlock(
+            `{ name: "lint", command: "${lint}" },`,
+            `{ name: "tests", command: "${test}", slow: true },`
+          )
+        ),
+        config
+      )
+    })
+  }
+
+  it("turns on a preset for each lockfile", () => {
+    const lines = initConfig("uv.lock", "pnpm-lock.yaml")
+    assert.ok(lines.includes('import { defineFactory, pnpm, uv } from "factory"'))
+    assert.ok(lines.includes("  toolchains: [pnpm(), uv()],"))
+  })
+
+  it("suggests each preset's checks, named by preset, for each lockfile", () => {
+    const config = initConfig("uv.lock", "pnpm-lock.yaml").join("\n")
+    assert.ok(
+      config.includes(
+        checksBlock(
+          '{ name: "pnpm lint", command: "pnpm lint" },',
+          '{ name: "pnpm tests", command: "pnpm test", slow: true },',
+          '{ name: "uv lint", command: "uv run ruff check" },',
+          '{ name: "uv tests", command: "uv run pytest", slow: true },'
+        )
+      ),
+      config
+    )
+  })
+
+  it("leaves every toolchain commented out with no lockfile", () => {
+    const config = initConfig().join("\n")
+    assert.ok(
+      config.includes(
+        [
+          'import { defineFactory } from "factory"',
+          '// import { defineFactory, npm, pnpm, uv } from "factory"',
+        ].join("\n")
+      )
+    )
+    assert.ok(
+      config.includes(
+        [
+          "  // Toolchain presets: cache mounts, a locked install and health probes.",
+          "  // toolchains: [npm()],",
+          "  // toolchains: [pnpm()],",
+          "  // toolchains: [uv()],",
+          "",
+        ].join("\n")
+      )
+    )
+    assert.ok(!config.includes("\n  toolchains:"))
+    assert.ok(
+      config.includes(
+        checksBlock(
+          '{ name: "lint", command: "pnpm lint" },',
+          '{ name: "tests", command: "pnpm test", slow: true },'
+        )
+      ),
+      config
+    )
+  })
+
+  it("writes a starter config that type-checks with its presets", () => {
+    const dir = repo()
+    for (const lockfile of ["package-lock.json", "pnpm-lock.yaml", "uv.lock"]) {
+      writeFileSync(join(dir, lockfile), "")
+    }
+    factory(dir, ["init"])
+    const run = tsc(join(dir, ".factory/tsconfig.json"))
+    assert.equal(run.status, 0, run.stdout)
+  })
+
   it("keeps what .gitignore has and adds only what it lacks", () => {
     const dir = repo()
     writeFileSync(join(dir, ".gitignore"), "dist/\n.sandcastle/")

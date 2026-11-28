@@ -272,7 +272,7 @@ const atOwnPath = (hostPath: string, readonly?: true): ResolvedMount =>
 // lockfiles are the contract: an install that would change one fails.
 const INSTALL_TIMEOUT_SECONDS = 600
 
-const PNPM_LOCKFILE: Lockfile = {
+export const PNPM_LOCKFILE: Lockfile = {
   path: "pnpm-lock.yaml",
   manifest: "package.json",
   regenerate: "pnpm install --prefer-offline",
@@ -281,14 +281,14 @@ const PNPM_LOCKFILE: Lockfile = {
 
 // --ignore-scripts: npm runs dependencies' install scripts by default, and a
 // script that runs in every sandbox is code nobody reviewed.
-const NPM_LOCKFILE: Lockfile = {
+export const NPM_LOCKFILE: Lockfile = {
   path: "package-lock.json",
   manifest: "package.json",
   regenerate: "npm install --package-lock-only --ignore-scripts --prefer-offline",
   install: "npm ci --ignore-scripts --prefer-offline",
 }
 
-const UV_LOCKFILE: Lockfile = {
+export const UV_LOCKFILE: Lockfile = {
   path: "uv.lock",
   manifest: "pyproject.toml",
   regenerate: "uv lock",
