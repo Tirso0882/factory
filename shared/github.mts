@@ -159,16 +159,45 @@ export const replyToReviewComment = (
     JSON.stringify({ body: fromFactory(body) })
   )
 
+/**
+ * Change the labels of issue or pull request `number` through the REST API.
+ * Not `gh issue edit` or `gh pr edit`: they still ask for Projects (classic),
+ * which GitHub now refuses. A label that's already off is fine.
+ */
+const relabel = (
+  number: number,
+  { add = [], remove = [] }: { add?: string[]; remove?: string[] }
+) => {
+  if (add.length > 0) {
+    host(
+      "gh",
+      [
+        "api",
+        "--method",
+        "POST",
+        `repos/${REPO}/issues/${number}/labels`,
+        "--input",
+        "-",
+      ],
+      JSON.stringify({ labels: add })
+    )
+  }
+  for (const label of remove) {
+    try {
+      gh(
+        "api",
+        "--method",
+        "DELETE",
+        `repos/${REPO}/issues/${number}/labels/${encodeURIComponent(label)}`
+      )
+    } catch (error) {
+      if (!String(error).includes("HTTP 404")) throw error
+    }
+  }
+}
+
 export const removeReadyLabel = (names: ResolvedNames, pullRequest: number) =>
-  gh(
-    "pr",
-    "edit",
-    String(pullRequest),
-    "--repo",
-    REPO,
-    "--remove-label",
-    names.readyLabel
-  )
+  relabel(pullRequest, { remove: [names.readyLabel] })
 
 const REVIEW_THREADS_QUERY = `
 query($owner: String!, $repo: String!, $number: Int!) {
@@ -309,17 +338,12 @@ export const handToHuman = (
   const where = pullRequest
     ? `**Pull request:** ${pullRequest}`
     : `**Branch:** \`${ticket.branch}\`, on the factory host only (never pushed).`
-  gh(
-    "issue",
-    "edit",
-    String(ticket.number),
-    "--repo",
-    REPO,
-    "--remove-label",
-    names.readyLabel,
-    "--add-label",
-    names.humanLabel
-  )
+  // The human label first: if the second call fails, the ticket keeps both
+  // labels rather than neither.
+  relabel(ticket.number, {
+    add: [names.humanLabel],
+    remove: [names.readyLabel],
+  })
   host(
     "gh",
     [
