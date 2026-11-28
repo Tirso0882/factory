@@ -284,7 +284,8 @@ export const PNPM_LOCKFILE: Lockfile = {
 export const NPM_LOCKFILE: Lockfile = {
   path: "package-lock.json",
   manifest: "package.json",
-  regenerate: "npm install --package-lock-only --ignore-scripts --prefer-offline",
+  regenerate:
+    "npm install --package-lock-only --ignore-scripts --prefer-offline",
   install: "npm ci --ignore-scripts --prefer-offline",
 }
 
@@ -746,10 +747,7 @@ const resolvePrompts = (
 const PACKAGE_NAME = "@tirso0882/factory"
 
 /** Stops a CLI the project's `version` range doesn't accept. */
-export const checkVersion = (
-  range: string | undefined,
-  installed: string
-) => {
+export const checkVersion = (range: string | undefined, installed: string) => {
   if (range === undefined) return
   if (semver.validRange(range) === null) {
     throw new Error(`version: "${range}" isn't a semver range.`)

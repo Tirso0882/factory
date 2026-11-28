@@ -25,7 +25,9 @@ export const chooseNativeSandbox = (host: Host): NativeSandbox => {
     if (darwin >= FIRST_SEATBELT_DARWIN) return "seatbelt"
     throw unsupported(macOSName(darwin))
   }
-  throw unsupported(host.platform === "win32" ? "native Windows" : host.platform)
+  throw unsupported(
+    host.platform === "win32" ? "native Windows" : host.platform
+  )
 }
 
 const macOSName = (darwin: number) => {
