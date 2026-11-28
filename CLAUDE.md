@@ -1,13 +1,8 @@
-## Agent skills
+# Working in the factory
 
-### Issue tracker
-
-Issues live in GitHub Issues on `Tirso0882/factory`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+- Checks: the `checks` in `.factory/factory.config.mts`, the same gates as CI.
+  Run one test file with `node --test <path>`; `npm test -- <path>` runs the
+  whole suite as well.
+- Tests for the CLI's root modules (`cli.mts`, `init.mts`) run the `factory`
+  command, in `bin/factory.test.mts`.
+- The reviewer holds each branch to `.factory/standards.md`.
