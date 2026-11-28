@@ -30,7 +30,9 @@
   "scripts": {
     "typecheck": "tsc",
     "test": "node --test '*.test.mts' 'shared/**/*.test.mts' 'workflows/**/*.test.mts' 'bin/**/*.test.mts'",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@ai-hero/sandcastle": "^0.14.0",
@@ -45,6 +47,7 @@
     "@standard-schema/spec": "^1.1.0",
     "eslint": "^10.15.0",
     "globals": "^17.14.0",
+    "prettier": "^3.10.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.74.0"
   }

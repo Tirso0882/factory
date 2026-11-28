@@ -1,0 +1,8 @@
+# Written by release-please and npm, not by hand.
+CHANGELOG.md
+.release-please-manifest.json
+package-lock.json
+# What a factory run writes.
+.sandcastle/
+.factory/logs/
+.factory/node_modules/
