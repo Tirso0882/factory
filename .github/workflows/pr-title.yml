@@ -1,0 +1,26 @@
+# Holds a pull request's title to Conventional Commits. Pull requests are
+# squash-merged, so the title becomes the commit on main, and release-please
+# builds the changelog and the version from it.
+name: pr-title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  pr-title:
+    name: pr-title
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # The title goes through env, never into the script: it's user input.
+      - env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          types='feat|fix|perf|test|refactor|docs|ci|build|chore|revert'
+          if ! printf '%s' "$TITLE" | grep -Eq "^($types)(\([a-z0-9-]+\))?!?: [^ ]"; then
+            echo "::error::The title isn't a Conventional Commit: \"$TITLE\". Start it with a type such as feat:, fix: or chore(scope):, then the subject."
+            exit 1
+          fi
