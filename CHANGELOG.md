@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/Tirso0882/factory/compare/v0.1.2...v0.1.3) (2026-11-28)
+
+
+### Features
+
+* **init:** pick the toolchain from the repo's lockfile ([#20](https://github.com/Tirso0882/factory/issues/20)) ([db9ab9c](https://github.com/Tirso0882/factory/commit/db9ab9c1cfe9683be21ae4788ef656a1b5e5cd59))
+
+
+### Bug Fixes
+
+* change labels through the REST API, not gh issue/pr edit ([#21](https://github.com/Tirso0882/factory/issues/21)) ([e071994](https://github.com/Tirso0882/factory/commit/e0719943f886befeeca9f7a94c31d549854d3740))
+
 ## [0.1.2](https://github.com/Tirso0882/factory/compare/v0.1.1...v0.1.2) (2026-11-25)
 
 
