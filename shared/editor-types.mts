@@ -5,7 +5,13 @@
 // installed here. Every `factory` command remakes the link, so a fresh clone
 // or another Node version gets it on the first run.
 
-import { existsSync, mkdirSync, readlinkSync, rmSync, symlinkSync } from "node:fs"
+import {
+  existsSync,
+  mkdirSync,
+  readlinkSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs"
 import { dirname, join } from "node:path"
 
 /** The installed CLI, whose index.mts the config imports. */

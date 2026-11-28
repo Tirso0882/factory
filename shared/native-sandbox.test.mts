@@ -64,7 +64,8 @@ describe("chooseNativeSandbox", () => {
 
   it("refuses a host with no native sandbox, never running unsandboxed", () => {
     assert.throws(
-      () => chooseNativeSandbox({ platform: "freebsd", release: "14.1-RELEASE" }),
+      () =>
+        chooseNativeSandbox({ platform: "freebsd", release: "14.1-RELEASE" }),
       (error: Error) =>
         /freebsd/.test(error.message) &&
         /Linux, WSL2 on Windows, or macOS 14 or later/.test(error.message)

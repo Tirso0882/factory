@@ -18,6 +18,7 @@ export default defineFactory({
     { name: "typecheck", command: "npm run typecheck" },
     { name: "test", command: "npm test" },
     { name: "lint", command: "npm run lint" },
+    { name: "format", command: "npm run format:check" },
   ],
 
   // npm() skips install scripts. esbuild has one, but tsx runs without it

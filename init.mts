@@ -17,11 +17,7 @@ import {
   STARTER_TSCONFIG,
   linkEditorTypes,
 } from "./shared/editor-types.mts"
-import {
-  NPM_LOCKFILE,
-  PNPM_LOCKFILE,
-  UV_LOCKFILE,
-} from "./shared/factory.mts"
+import { NPM_LOCKFILE, PNPM_LOCKFILE, UV_LOCKFILE } from "./shared/factory.mts"
 import { CONFIG_PATH } from "./shared/load-factory.mts"
 
 /** What a run writes and git must never see. */

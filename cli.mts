@@ -77,7 +77,9 @@ const main = async (argv: readonly string[]) => {
     case "check": {
       const unknown = rest.filter((arg) => arg !== "--quick")
       if (unknown.length > 0) {
-        throw new Error(`factory check takes only --quick, got ${unknown.join(" ")}.`)
+        throw new Error(
+          `factory check takes only --quick, got ${unknown.join(" ")}.`
+        )
       }
       const { checkEnvironment } = await import("./check-environment.mts")
       const failed = await checkEnvironment(factory, root, {
@@ -88,7 +90,9 @@ const main = async (argv: readonly string[]) => {
     }
     case "preflight": {
       if (rest.length > 0) {
-        throw new Error(`factory preflight takes no options, got ${rest.join(" ")}.`)
+        throw new Error(
+          `factory preflight takes no options, got ${rest.join(" ")}.`
+        )
       }
       const { preflight } = await import("./workflows/preflight/preflight.mts")
       await preflight(factory, ctrlC())
@@ -112,7 +116,7 @@ try {
   // mistake, and FACTORY_DEBUG=1 shows it.
   if (process.env["FACTORY_DEBUG"]) console.error(error)
   else {
-    for (let e: unknown = error; e !== undefined; ) {
+    for (let e: unknown = error; e !== undefined;) {
       const text = e instanceof Error ? e.message : String(e)
       console.error(e === error ? text : `  Caused by: ${text}`)
       e = e instanceof Error ? e.cause : undefined

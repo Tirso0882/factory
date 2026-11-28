@@ -5,12 +5,9 @@ the code around the change.
 
 ## Code
 
-- TypeScript in `.mts` files, with erasable syntax only: Node runs the tests
-  by stripping the types, so no enums, namespaces or parameter properties.
-- Imports carry their extension (`./factory.mts`).
-- No semicolons, double quotes, and trailing commas in multi-line literals
-  but not after the last argument of a call. No formatter enforces it:
-  match the file.
+- Checks cover the mechanical rules: `tsc` holds the code to erasable syntax
+  and imports with their extension, Prettier formats it (`npm run format`),
+  and ESLint wants a header comment in every source file.
 - Keep decisions pure. `resolveFactory` and the modules like it take the
   host's facts as data (`Host`) and do no I/O; files, commands and the
   environment stay at the edges (`shared/host.mts`, `cli.mts`).
@@ -19,11 +16,16 @@ the code around the change.
   `env` repoint a variable a toolchain or the factory owns.
 - Errors a user sees say what's wrong and what to do, in one or two plain
   sentences, naming the config field (`skills: the pr skill is missing: ...`).
+- A fact the code already names, such as a path, a list or a constant, has
+  one owner: import it from there rather than writing it again.
+- A change that makes nearby text wrong (a comment, an example, the starter
+  config `factory init` writes, the README) fixes that text in the same
+  branch.
 
 ## Comments
 
-- A source file starts with a comment that says what it is for. Test
-  files start with their imports.
+- A source file's header comment says what the file is for. Test files may
+  start with their imports instead.
 - Comments say why, in plain words. They don't narrate the code.
 
 ## Tests

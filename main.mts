@@ -108,7 +108,9 @@ export const runFactory = async (
     )
   }
   if ([...onlyIssues].some((n) => !Number.isInteger(n) || n < 1)) {
-    throw new Error(`--issue takes issue numbers, got ${cli.issue?.join(", ")}.`)
+    throw new Error(
+      `--issue takes issue numbers, got ${cli.issue?.join(", ")}.`
+    )
   }
 
   const pullRequestOption = (name: "update-pr" | "address-pr") => {
@@ -230,7 +232,11 @@ export const runFactory = async (
   await preflight(factory, stop.signal)
 
   const runWaves = async () => {
-    for (let wave = 1; wave <= limits.maxWaves && !stop.signal.aborted; wave++) {
+    for (
+      let wave = 1;
+      wave <= limits.maxWaves && !stop.signal.aborted;
+      wave++
+    ) {
       console.log(`\n=== Wave ${wave}/${limits.maxWaves} ===\n`)
       git("fetch", "--quiet", "origin", baseBranch)
 
@@ -322,10 +328,14 @@ export const runFactory = async (
   for (const [number, update] of updates) {
     switch (update.status) {
       case "updated":
-        console.log(`  ↻ PR #${number}: ${baseBranch} merged in, ${update.merge}`)
+        console.log(
+          `  ↻ PR #${number}: ${baseBranch} merged in, ${update.merge}`
+        )
         break
       case "failed":
-        console.log(`  ✗ PR #${number}: not updated, commented: ${update.reason}`)
+        console.log(
+          `  ✗ PR #${number}: not updated, commented: ${update.reason}`
+        )
         break
       case "interrupted":
         console.log(`  … PR #${number}: not updated: ${update.reason}`)
@@ -362,7 +372,9 @@ export const runFactory = async (
         )
         break
       case "handed-off":
-        console.log(`  → #${number}: relabelled ${humanLabel}: ${outcome.reason}`)
+        console.log(
+          `  → #${number}: relabelled ${humanLabel}: ${outcome.reason}`
+        )
         break
       case "interrupted":
         console.log(

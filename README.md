@@ -78,7 +78,7 @@ Only issues and reviews from the repo's owner are acted on.
 `.factory/factory.config.mts` declares what's specific to the project. Everything else has a default.
 
 ```ts
-import { defineFactory, pnpm } from "factory";
+import { defineFactory, pnpm } from "factory"
 
 export default defineFactory({
   version: "^0.1.3", // the CLI versions this config works with
@@ -89,7 +89,7 @@ export default defineFactory({
   ],
   standards: "standards.md", // what the reviewer holds each branch to
   skills: ["pr"], // from ~/.claude/skills
-});
+})
 ```
 
 | Setting                                            | For                                                                          |

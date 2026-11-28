@@ -28,7 +28,9 @@ const tsc = (tsconfig: string) =>
     encoding: "utf8",
   })
 const dirs: string[] = []
-after(() => dirs.forEach((dir) => rmSync(dir, { recursive: true, force: true })))
+after(() =>
+  dirs.forEach((dir) => rmSync(dir, { recursive: true, force: true }))
+)
 
 const tempDir = () => {
   // Real, as git prints it: macOS's temp folder is behind a symlink.
@@ -169,7 +171,9 @@ describe("factory init", () => {
     for (const lockfile of lockfiles) writeFileSync(join(dir, lockfile), "")
     const run = factory(dir, ["init"])
     assert.equal(run.status, 0, run.stderr)
-    return readFileSync(join(dir, ".factory/factory.config.mts"), "utf8").split("\n")
+    return readFileSync(join(dir, ".factory/factory.config.mts"), "utf8").split(
+      "\n"
+    )
   }
 
   /** The commented checks block, from its `{ name, command }` lines. */
@@ -180,7 +184,12 @@ describe("factory init", () => {
       "  // ],",
     ].join("\n")
 
-  const presets: [lockfile: string, preset: string, lint: string, test: string][] = [
+  const presets: [
+    lockfile: string,
+    preset: string,
+    lint: string,
+    test: string,
+  ][] = [
     ["package-lock.json", "npm", "npm run lint", "npm test"],
     ["pnpm-lock.yaml", "pnpm", "pnpm lint", "pnpm test"],
     ["uv.lock", "uv", "uv run ruff check", "uv run pytest"],
@@ -188,7 +197,9 @@ describe("factory init", () => {
   for (const [lockfile, preset, lint, test] of presets) {
     it(`turns on ${preset}() for a repo with ${lockfile}`, () => {
       const lines = initConfig(lockfile)
-      assert.ok(lines.includes(`import { defineFactory, ${preset} } from "factory"`))
+      assert.ok(
+        lines.includes(`import { defineFactory, ${preset} } from "factory"`)
+      )
       assert.ok(lines.includes(`  toolchains: [${preset}()],`))
       assert.ok(!lines.some((line) => line.includes("// import")))
     })
@@ -209,7 +220,9 @@ describe("factory init", () => {
 
   it("turns on a preset for each lockfile", () => {
     const lines = initConfig("uv.lock", "pnpm-lock.yaml")
-    assert.ok(lines.includes('import { defineFactory, pnpm, uv } from "factory"'))
+    assert.ok(
+      lines.includes('import { defineFactory, pnpm, uv } from "factory"')
+    )
     assert.ok(lines.includes("  toolchains: [pnpm(), uv()],"))
   })
 
@@ -290,7 +303,10 @@ describe("factory init", () => {
     assert.equal(run.status, 1)
     assert.match(run.stderr, /\.factory already exists/)
     assert.deepEqual(readdirSync(join(dir, ".factory")), ["factory.config.mts"])
-    assert.equal(readFileSync(join(dir, ".factory/factory.config.mts"), "utf8"), "mine\n")
+    assert.equal(
+      readFileSync(join(dir, ".factory/factory.config.mts"), "utf8"),
+      "mine\n"
+    )
     assert.equal(existsSync(join(dir, ".gitignore")), false)
   })
 
@@ -304,7 +320,10 @@ describe("factory init", () => {
     const config = join(dir, ".factory/factory.config.mts")
     writeFileSync(
       config,
-      readFileSync(config, "utf8").replace('standards: "standards.md"', "standards: 42")
+      readFileSync(config, "utf8").replace(
+        'standards: "standards.md"',
+        "standards: 42"
+      )
     )
     const broken = tsc(tsconfig)
     assert.equal(broken.status, 2)
@@ -317,7 +336,9 @@ describe("factory init", () => {
   it("commits no machine's paths, and any command relinks the types", () => {
     const dir = repo()
     factory(dir, ["init"])
-    assert.ok(!readFileSync(join(dir, ".factory/tsconfig.json"), "utf8").includes("/"))
+    assert.ok(
+      !readFileSync(join(dir, ".factory/tsconfig.json"), "utf8").includes("/")
+    )
     // A fresh clone has the committed files but not the gitignored link.
     rmSync(join(dir, ".factory/node_modules"), { recursive: true })
     factory(dir, ["check", "--nope"])
